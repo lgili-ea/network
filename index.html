@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Topología de red · Fibra óptica</title>
+<style>
+:root{--bg:#0B1223;--bg2:#0B1223;--panel:#141F3A;--text:#e8eefc;--muted:#AAB9DC;--line:#26365e;--accent:#22d3ee;--down:#fbbf24;--up:#34d399;color-scheme:dark;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:light){:root:not([data-theme="dark"]){--bg:#0B1223;--bg2:#0B1223;--panel:#141F3A;--text:#14203c;--muted:#AAB9DC;--line:#c3d0e8;--accent:#0891b2;--down:#d97706;--up:#059669;color-scheme:light}}
+:root[data-theme="dark"]{--bg:#0B1223;--bg2:#0B1223;--panel:#141F3A;--text:#e8eefc;--muted:#AAB9DC;--line:#26365e}
+*{box-sizing:border-box}
+body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;background:radial-gradient(1200px 600px at 50% -10%,var(--bg2),var(--bg));background-color:var(--bg);color:var(--text);min-height:100vh;padding:20px 16px 32px}
+.wrap{max-width:1200px;margin:0 auto}
+h1{margin:0;font-size:clamp(22px,3.2vw,34px);letter-spacing:.3px;color:#fff}
+h1 span{color:#22D3EE}
+.sub{color:var(--muted);margin:6px 0 18px}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:16px}
+.stat{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:10px 14px}
+.stat b{display:block;font-size:22px;color:var(--accent)}
+.stat small{color:var(--muted)}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:10px;overflow-x:auto}
+svg{display:block;width:100%;min-width:760px;height:auto}
+.legend{display:flex;flex-wrap:wrap;gap:16px;margin-top:14px;color:var(--muted);font-size:14px}
+.legend i{display:inline-block;width:12px;height:12px;border-radius:50%;margin-right:6px;vertical-align:-1px}
+.flow{stroke-dasharray:7 9;animation:fl 1.2s linear infinite}
+@keyframes fl{to{stroke-dashoffset:-16}}
+.blink{animation:bk 1.4s steps(2,start) infinite}
+@keyframes bk{50%{opacity:.25}}
+.pulse{animation:pl 2.6s ease-in-out infinite;transform-box:fill-box;transform-origin:center}
+@keyframes pl{50%{opacity:.35}}
+.t{fill:var(--text)}#sites .t{fill:#fff}.m{fill:var(--muted)}
+[data-dev]{cursor:pointer}[data-dev]:hover{filter:drop-shadow(0 0 7px var(--accent))}
+#modal{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(5,10,25,.65);backdrop-filter:blur(6px);z-index:50;padding:16px}
+#modal.on{display:flex}
+.mp{position:relative;background:var(--panel);border:1px solid var(--accent);border-radius:18px;max-width:580px;width:100%;max-height:90vh;overflow:auto;padding:20px;box-shadow:0 20px 60px rgba(0,0,0,.5);animation:pop .25s ease-out;color:#E8EEFC}
+@keyframes pop{from{transform:scale(.85);opacity:0}}
+.mp svg{min-width:0;max-height:190px;background:var(--bg);border-radius:12px;margin-bottom:12px}
+.mp h2{margin:0;font-size:22px}.mp .r{color:var(--accent);margin:2px 0 12px}
+.mp dl{display:grid;grid-template-columns:130px 1fr;margin:0}.mp dt,.mp dd{margin:0;padding:8px 0;border-top:1px solid var(--line);font-size:14px}.mp dt{color:var(--muted)}
+.mp .n{color:var(--muted);font-size:12px;margin:12px 0 0}.mp .t{fill:#E8EEFC}
+.x{position:absolute;top:10px;right:12px;border:0;background:var(--bg);color:var(--text);width:32px;height:32px;border-radius:50%;font-size:20px;cursor:pointer;z-index:2}
+</style>
+</head>
+<body>
+<div class="wrap">
+<h1>Topología de red · <span>Backbone de fibra óptica</span></h1>
+<p class="sub">Edificio principal hacia 5 sectores mediante fibra OS2, conversión de medios y distribución por switches y Access Points UniFi. Hacé clic en cualquier dispositivo para ver sus especificaciones.</p>
+<div class="stats">
+<div class="stat"><b>1</b><small>Switch core MikroTik</small></div>
+<div class="stat"><b>5</b><small>Enlaces de fibra OS2 9/125 µm</small></div>
+<div class="stat"><b>5</b><small>Media converters MC220L + módulo TL-SM311LS</small></div>
+<div class="stat"><b>5</b><small>Switches UniFi USW-Ultra</small></div>
+<div class="stat"><b>10</b><small>Access Points UniFi UAP-AC-LR (2 por sector)</small></div>
+</div>
+<div class="card">
+<svg id="net" viewBox="0 0 1200 880" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Diagrama de topología de red">
+<defs>
+<linearGradient id="gm" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3a424b"/><stop offset="1" stop-color="#1d2228"/></linearGradient>
+<linearGradient id="gw" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f4f7fb"/><stop offset="1" stop-color="#cfd7e3"/></linearGradient>
+<linearGradient id="gb" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2f7fd0"/><stop offset="1" stop-color="#1b4f8f"/></linearGradient>
+<filter id="glow" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="3" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+<filter id="sh" x="-20%" y="-20%" width="140%" height="160%"><feDropShadow dx="0" dy="4" stdDeviation="4" flood-opacity=".45"/></filter>
+<g id="sfp"><rect x="-13" y="-4" width="26" height="34" rx="3" fill="#c9d1da" stroke="#7b8794"/><rect x="-9" y="22" width="7" height="8" fill="#222"/><rect x="2" y="22" width="7" height="8" fill="#222"/><rect x="-11" y="-2" width="22" height="7" rx="2" fill="#2f7fd0"/><circle cx="0" cy="14" r="2" fill="#22d3ee" class="blink"/></g>
+<g id="mc" filter="url(#sh)"><rect x="-52" y="-24" width="104" height="48" rx="7" fill="url(#gb)" stroke="#12376a"/><rect x="-46" y="-18" width="92" height="9" rx="2" fill="#0e2b52"/><text x="0" y="-11" font-size="7" fill="#9fd0ff" text-anchor="middle" font-weight="700">TP-LINK MC220L</text><text x="-44" y="9" font-size="8" fill="#cfe3ff">SFP 1G ▲</text><rect x="22" y="-3" width="20" height="14" rx="2" fill="#cfd7e3"/><rect x="25" y="0" width="14" height="8" fill="#111"/><circle cx="-4" cy="3" r="2.2" fill="#34d399" class="blink"/><circle cx="4" cy="3" r="2.2" fill="#fbbf24"/><circle cx="12" cy="3" r="2.2" fill="#34d399"/></g>
+<g id="usw" filter="url(#sh)"><rect x="-50" y="-26" width="100" height="52" rx="12" fill="url(#gw)" stroke="#9aa6b8"/><circle cx="0" cy="-12" r="5" fill="none" stroke="#2f7fd0" stroke-width="2"/><g fill="#1c222b"><rect x="-40" y="2" width="9" height="9" rx="1.5"/><rect x="-28" y="2" width="9" height="9" rx="1.5"/><rect x="-16" y="2" width="9" height="9" rx="1.5"/><rect x="-4" y="2" width="9" height="9" rx="1.5"/><rect x="8" y="2" width="9" height="9" rx="1.5"/><rect x="20" y="2" width="9" height="9" rx="1.5"/><rect x="32" y="2" width="9" height="9" rx="1.5"/></g><g fill="#34d399"><circle cx="-35.5" cy="17" r="1.6" class="blink"/><circle cx="-23.5" cy="17" r="1.6"/><circle cx="-11.5" cy="17" r="1.6" class="blink"/><circle cx=".5" cy="17" r="1.6"/><circle cx="12.5" cy="17" r="1.6" class="blink"/><circle cx="24.5" cy="17" r="1.6"/></g><text x="0" y="-19" font-size="0"> </text></g>
+<radialGradient id="gap" cx=".4" cy=".35" r=".8"><stop offset="0" stop-color="#ffffff"/><stop offset="1" stop-color="#cfd7e3"/></radialGradient>
+<g id="ap"><circle r="22" fill="none" stroke="var(--accent)" stroke-width="1.5"><animate attributeName="r" values="22;36" dur="2.4s" repeatCount="indefinite"/><animate attributeName="opacity" values=".7;0" dur="2.4s" repeatCount="indefinite"/></circle><circle r="22" fill="none" stroke="var(--accent)" stroke-width="1.5"><animate attributeName="r" values="22;36" dur="2.4s" begin="1.2s" repeatCount="indefinite"/><animate attributeName="opacity" values=".7;0" dur="2.4s" begin="1.2s" repeatCount="indefinite"/></circle><g filter="url(#sh)"><circle r="22" fill="url(#gap)" stroke="#9aa6b8"/><circle r="15" fill="#eef2f7" stroke="#c3ccd9"/><circle r="9" fill="none" stroke="#2f7fd0" stroke-width="2.5" class="pulse"/><circle r="2.2" fill="#2f7fd0"/></g></g>
+</defs>
+
+<g id="bg"></g>
+
+<!-- Edificio principal -->
+<rect x="250" y="20" width="700" height="170" rx="18" fill="none" stroke="var(--accent)" stroke-opacity=".5" stroke-dasharray="5 6"/>
+<text x="270" y="42" class="m" font-size="12" letter-spacing="2" font-weight="700">EDIFICIO PRINCIPAL</text>
+<g id="core" data-dev="core" filter="url(#sh)">
+<rect x="290" y="56" width="620" height="92" rx="8" fill="url(#gm)" stroke="#0b0e12" stroke-width="2"/>
+<rect x="290" y="56" width="620" height="5" rx="2" fill="#e0e0e0" opacity=".12"/>
+<text x="310" y="82" font-size="15" font-weight="700" fill="#f1f5f9" letter-spacing=".5">MikroTik</text>
+<text x="310" y="98" font-size="10" fill="#9aa7b5">CRS310-1G-5S-4S+IN · 10 puertos · 36 Gb/s</text>
+<g id="ports"></g>
+<circle cx="880" cy="72" r="3.5" fill="#34d399" class="pulse"/><circle cx="866" cy="72" r="3.5" fill="#22d3ee" class="blink"/>
+</g>
+<text x="330" y="168" font-size="10" class="m" text-anchor="middle">1 × GbE</text>
+<text x="600" y="184" font-size="10" class="m" text-anchor="middle">5 × SFP · módulos S-31DLC20D (1310 nm, LC dúplex)</text>
+<text x="825" y="168" font-size="10" class="m" text-anchor="middle">4 × SFP+ libres</text>
+
+<g id="links"></g>
+<g id="sites"></g>
+<g id="packets"></g>
+</svg>
+</div>
+<div class="legend">
+<span><i style="background:var(--accent)"></i>Fibra monomodo (LC dúplex)</span>
+<span><i style="background:var(--down)"></i>Datos hacia el sector</span>
+<span><i style="background:var(--up)"></i>Datos hacia el core</span>
+<span><i style="background:#94a3b8"></i>Cable UTP Cat6</span>
+<span>Tráfico mostrado: simulado</span>
+</div>
+</div>
+<script>
+(function(){
+var S=[
+["Laboratorios","Sector académico"],
+["Industria","Planta · talleres"],
+["Gimnasio cubierto","Área deportiva"],
+["Bodega piloto","Producción · elaboración"],
+["Campo de deportes","Director Salvador Calafat"]
+];
+// Distancia de cada fibra en metros (editá estos valores)
+var DIST=[135,280,230,175,210];
+var C=[140,370,600,830,1060],P=[480,540,600,660,720];
+var ports="",links="",sites="",pk="";
+// puertos del core
+ports+='<rect x="318" y="108" width="24" height="18" rx="2" fill="#0b0e12" stroke="#5b6672"/><rect x="321" y="111" width="18" height="9" fill="#d4af37" opacity=".7"/>';
+for(var i=0;i<5;i++){ports+='<rect x="'+(P[i]-12)+'" y="108" width="24" height="16" rx="2" fill="#0b0e12" stroke="#5b6672"/><use href="#sfp" data-dev="sfpc" x="'+P[i]+'" y="120"/>';}
+for(var k=0;k<4;k++){ports+='<rect x="'+(795+k*28)+'" y="108" width="22" height="16" rx="2" fill="#0b0e12" stroke="#5b6672"/><rect x="'+(799+k*28)+'" y="112" width="14" height="6" fill="#1f2933"/>';}
+document.getElementById("ports").innerHTML=ports;
+for(var i=0;i<5;i++){
+ var d="M"+P[i]+",152 C"+P[i]+",230 "+C[i]+",230 "+C[i]+",300 L"+C[i]+",418";
+ links+='<path id="f'+i+'" d="'+d+'" fill="none" stroke="var(--accent)" stroke-opacity=".25" stroke-width="7" stroke-linecap="round"/>'
+  +'<path d="'+d+'" fill="none" stroke="var(--accent)" stroke-width="2.2" class="flow" filter="url(#glow)"/>'
+  +'<g data-dev="fibre" data-i="'+i+'"><rect x="'+(C[i]-36)+'" y="289" width="72" height="24" rx="12" fill="var(--panel)" stroke="var(--accent)"/><text x="'+C[i]+'" y="305" font-size="12" font-weight="700" fill="var(--accent)" text-anchor="middle"> ≈ '+DIST[i]+' m</text></g>'
+  +'<line id="u'+i+'" x1="'+C[i]+'" y1="494" x2="'+C[i]+'" y2="542" stroke="#94a3b8" stroke-width="3.5" stroke-linecap="round"/><line x1="'+C[i]+'" y1="494" x2="'+C[i]+'" y2="542" stroke="#e2e8f0" stroke-width="1.4" class="flow"/>';
+ for(var q=0;q<2;q++){var ax=C[i]+(q?50:-50),ad="M"+C[i]+",594 C"+C[i]+",622 "+ax+",616 "+ax+",644";links+='<path id="p'+i+q+'" d="'+ad+'" fill="none" stroke="#94a3b8" stroke-width="3.5" stroke-linecap="round"/><path d="'+ad+'" fill="none" stroke="#e2e8f0" stroke-width="1.4" class="flow"/>';pk+='<circle r="3" fill="var(--down)"><animateMotion dur="1.2s" begin="'+(q*.4+i*.1)+'s" repeatCount="indefinite"><mpath href="#p'+i+q+'"/></animateMotion></circle><circle r="3" fill="var(--up)"><animateMotion dur="1.5s" begin="'+(q*.3)+'s" repeatCount="indefinite" keyPoints="1;0" keyTimes="0;1" calcMode="linear"><mpath href="#p'+i+q+'"/></animateMotion></circle>';}
+ sites+='<g><rect x="'+(C[i]-108)+'" y="404" width="216" height="446" rx="16" fill="var(--bg)" fill-opacity=".45" stroke="var(--line)"/>'
+  +'<use href="#mc" data-dev="mc" x="'+C[i]+'" y="470"/><use href="#sfp" data-dev="sfpr" x="'+C[i]+'" y="420"/><use href="#usw" data-dev="usw" x="'+C[i]+'" y="568"/><use href="#ap" data-dev="ap" x="'+(C[i]-50)+'" y="668"/><use href="#ap" data-dev="ap" x="'+(C[i]+50)+'" y="668"/>'
+  +'<text x="'+(C[i]-50)+'" y="706" font-size="10" class="m" text-anchor="middle">UAP-AC-LR</text><text x="'+(C[i]+50)+'" y="706" font-size="10" class="m" text-anchor="middle">UAP-AC-LR</text>'
+  +'<text x="'+(C[i]-100)+'" y="438" font-size="10" class="m">MC220L</text><text x="'+(C[i]+100)+'" y="438" font-size="10" class="m" text-anchor="end">TL-SM311LS</text>'
+  +'<text x="'+(C[i]+100)+'" y="535" font-size="10" class="m" text-anchor="end">UniFi USW-Ultra</text>'
+  +'<text x="'+C[i]+'" y="738" font-size="'+15+'" font-weight="700" class="t" text-anchor="middle">'+S[i][0]+'</text>'
+  +'<text x="'+C[i]+'" y="758" font-size="11" class="m" text-anchor="middle">'+S[i][1]+'</text>'
+  +'<rect x="'+(C[i]-86)+'" y="772" width="172" height="58" rx="10" fill="var(--panel)" stroke="var(--line)"/>'
+  +'<text x="'+(C[i]-72)+'" y="793" font-size="12" fill="var(--down)">↓ <tspan id="d'+i+'">0</tspan> Mb/s</text>'
+  +'<text x="'+(C[i]-72)+'" y="814" font-size="12" fill="var(--up)">↑ <tspan id="a'+i+'">0</tspan> Mb/s</text>'
+  +'<circle cx="'+(C[i]+70)+'" cy="803" r="5" fill="#34d399" class="pulse"/></g>';
+ for(var j=0;j<3;j++){pk+='<circle r="4.5" fill="var(--down)" filter="url(#glow)"><animateMotion dur="'+(2.6+i*.25)+'s" begin="'+(j*.9+i*.2)+'s" repeatCount="indefinite"><mpath href="#f'+i+'"/></animateMotion></circle>';}
+ for(var j=0;j<2;j++){pk+='<circle r="4" fill="var(--up)" filter="url(#glow)"><animateMotion dur="'+(3.1+i*.2)+'s" begin="'+(j*1.5+i*.3)+'s" repeatCount="indefinite" keyPoints="1;0" keyTimes="0;1" calcMode="linear"><mpath href="#f'+i+'"/></animateMotion></circle>';}
+ pk+='<circle r="3" fill="var(--down)"><animate attributeName="cy" values="494;542" dur="1s" repeatCount="indefinite"/><animate attributeName="cx" values="'+(C[i]-3)+';'+(C[i]-3)+'" dur="1s" repeatCount="indefinite"/></circle>'
+  +'<circle r="3" fill="var(--up)"><animate attributeName="cy" values="542;494" dur="1.3s" repeatCount="indefinite"/><animate attributeName="cx" values="'+(C[i]+3)+';'+(C[i]+3)+'" dur="1.3s" repeatCount="indefinite"/></circle>';
+}
+document.getElementById("links").innerHTML=links;
+document.getElementById("sites").innerHTML=sites;
+document.getElementById("packets").innerHTML=pk;
+function tick(){for(var i=0;i<5;i++){
+ var a=document.getElementById("d"+i),b=document.getElementById("a"+i);
+ if(a)a.textContent=Math.round(40+Math.random()*(i==1?520:300));
+ if(b)b.textContent=Math.round(10+Math.random()*(i==1?260:120));}}
+tick();setInterval(tick,1500);window.NET={S:S,D:DIST};
+})();
+</script>
+<div id="modal"><div class="mp" id="mb"></div></div>
+<script>
+(function(){
+var D={
+core:{t:"MikroTik CRS310-1G-5S-4S+IN",r:"Switch core · Edificio principal",vb:"280 46 640 112",u:"core",s:[["Rol","Core de agregación: recibe los 5 módulos SFP hacia los sectores"],["Puertos","1 × Gigabit Ethernet RJ45 · 5 × SFP 1,25G · 4 × SFP+ 10G"],["Capacidad","36 Gb/s de conmutación"],["Sistema","RouterOS / SwOS (L2 y L3 con aceleración por hardware)"],["Alimentación","Doble: entrada DC y PoE-in"],["Montaje","1U rack · uso interior"]]},
+sfpc:{t:"MikroTik S-31DLC20D",r:"Módulo óptico SFP · lado core (5 unidades)",vb:"-30 -12 60 54",u:"sfp",s:[["Tipo","SFP 1,25 Gb/s monomodo (1000BASE-LX)"],["Conector","LC dúplex (2 fibras)"],["Longitud de onda","1310 nm"],["Alcance","Hasta 20 km"],["Diagnóstico","DDM / DOM"],["Se instala en","Puertos SFP del CRS310"]]},
+fibre:{t:"Fibra óptica monomodo OS2",r:"Enlace de exterior · 9/125 µm",svg:"<svg viewBox='0 0 300 110'><g transform='translate(60,55)'><circle r='48' fill='#1f2937'/><circle r='36' fill='#f59e0b'/><circle r='24' fill='#dbeafe'/><circle r='5' fill='#22d3ee'/></g><g class='t' font-size='12'><text x='130' y='28'>Cubierta exterior</text><text x='130' y='48'>Revestimiento 125 µm</text><text x='130' y='68'>Núcleo 9 µm</text></g></svg>",s:[["Tipo","Monomodo OS2 (ITU-T G.652.D)"],["Dimensiones","Núcleo 9 µm · revestimiento 125 µm"],["Atenuación","≤ 0,4 dB/km a 1310 nm"],["Instalación","Exterior: cubierta resistente a UV y humedad"],["Conectores","LC dúplex en ambos extremos (par TX/RX)"]]},
+mc:{t:"TP-Link MC220L",r:"Media converter Gigabit · uno por sector",vb:"-62 -34 124 68",u:"mc",s:[["Función","Convierte fibra (SFP) a cobre RJ45"],["Puertos","1 × RJ45 10/100/1000 · 1 × ranura SFP 1000M"],["Módulo SFP","No incluido: lleva el TL-SM311LS"],["Alimentación","Adaptador externo DC"],["Salida","UTP hacia el UniFi USW-Ultra"]]},
+sfpr:{t:"TP-Link TL-SM311LS",r:"Módulo óptico SFP · lado sector (5 unidades)",vb:"-30 -12 60 54",u:"sfp",s:[["Tipo","SFP Gigabit monomodo 1000BASE-LX"],["Conector","LC dúplex"],["Longitud de onda","1310 nm"],["Alcance","Hasta 10 km"],["Se instala en","Ranura SFP del MC220L"]]},
+usw:{t:"Ubiquiti UniFi USW-Ultra",r:"Switch de acceso · uno por sector",vb:"-62 -38 124 76",u:"usw",s:[["Puertos","8 × Gigabit Ethernet RJ45"],["PoE","Salida PoE+ 802.3af/at: alimenta los Access Points"],["Gestión","UniFi Network (controlador)"],["Refrigeración","Pasiva, sin ventilador"],["Uplink","UTP desde el MC220L"]]},
+ap:{t:"Ubiquiti UniFi UAP-AC-LR",r:"Access Point de largo alcance · 2 por sector",vb:"-42 -42 84 84",u:"ap",s:[["Wi-Fi","802.11ac doble banda (2,4 y 5 GHz)"],["Velocidad","Hasta 867 Mb/s en 5 GHz y 450 Mb/s en 2,4 GHz"],["Alcance","Largo alcance (aprox. 180 m en espacio abierto)"],["Puerto","1 × Gigabit RJ45 con PoE (802.3af/at o 24 V pasivo)"],["Montaje","Techo o pared"]]}
+};
+var m=document.getElementById("modal"),b=document.getElementById("mb");
+function close(){m.classList.remove("on")}
+document.getElementById("net").addEventListener("click",function(e){
+ var el=e.target.closest("[data-dev]");if(!el)return;
+ var k=el.getAttribute("data-dev"),d=D[k],s=d.s,t=d.t;
+ if(k=="fibre"){var i=+el.getAttribute("data-i"),N=NET.S[i];s=[["Tramo","Edificio principal → "+N[0]+(i==4?" "+N[1]:"")],["Longitud","≈ "+NET.D[i]+" m"]].concat(s)}
+ b.innerHTML='<button class="x" aria-label="Cerrar">×</button>'+(d.svg||'<svg viewBox="'+d.vb+'"><use href="#'+d.u+'"/></svg>')+'<h2>'+t+'</h2><p class="r">'+d.r+'</p><dl>'+s.map(function(x){return '<dt>'+x[0]+'</dt><dd>'+x[1]+'</dd>'}).join("")+'</dl><p class="n">Datos de referencia: confirmar en la hoja de datos oficial del fabricante.</p>';
+ m.classList.add("on");
+});
+m.addEventListener("click",function(e){if(e.target===m||e.target.classList.contains("x"))close()});
+document.addEventListener("keydown",function(e){if(e.key=="Escape")close()});
+})();
+</script>
+</body>
+</html>
